@@ -14,16 +14,16 @@ type action = Atack of int * int | Move of int * int | DoNothing;;
 
 (*Players definitions*)
 let invincible  = {position=(ref 0,ref 0);strength=70;life= ref 30;pa=ref 12;pm=ref 3;attack={dmg=10;range=3;pa=4}};;
-let predactor = {position=(ref 0,ref 0);strength=30;life= ref 70;pa=ref 10;pm=ref 5;attack={dmg=2;range=5;pa=2}};;
-let predator = {position=(ref 0,ref 0);strength=60;life=ref 40;pa=ref 6;pm=ref 11;attack={dmg=3;range=2;pa=2}};;
-let speeder = {position=(ref 0,ref 0);strength=40;life=ref 60;pa=ref 6;pm=ref 11;attack={dmg=3;range=1;pa=2}};;
-let equil1 = {position=(ref 0,ref 0);strength=50;life=ref 50;pa=ref 6;pm=ref 9;attack={dmg=2;range=2;pa=2}};;
-let equil2 = {position=(ref 0,ref 0);strength=50;life=ref 50;pa=ref 9;pm=ref 6;attack={dmg=3;range=1;pa=3}};;
+let predactor   = {position=(ref 0,ref 0);strength=30;life= ref 70;pa=ref 10;pm=ref 5;attack={dmg=2;range=5;pa=2}};;
+let predator    = {position=(ref 0,ref 0);strength=60;life=ref 40;pa=ref 6;pm=ref 11;attack={dmg=3;range=2;pa=2}};;
+let speeder     = {position=(ref 0,ref 0);strength=40;life=ref 60;pa=ref 6;pm=ref 11;attack={dmg=3;range=1;pa=2}};;
+let equil1      = {position=(ref 0,ref 0);strength=50;life=ref 50;pa=ref 6;pm=ref 9;attack={dmg=2;range=2;pa=2}};;
+let equil2      = {position=(ref 0,ref 0);strength=50;life=ref 50;pa=ref 9;pm=ref 6;attack={dmg=3;range=1;pa=3}};;
 
 
 
-let clear = function x -> Sys.command("clear")+x;; 
-
+let clear  = fun x -> Sys.command("clear");; 
+    
 let init_map h w = 
   let gr = Array.make_matrix h w Empty in 
   for i = 0 to w-1
@@ -53,7 +53,7 @@ let print_map map =
       do
         print_cell map.grid.(i).(j);
       done;
-      Printf.printf "\n";
+      Printf.printf "\n%!";
     done;
 ;;
 
@@ -107,7 +107,7 @@ let attack player map players_list x y =
 
 let distance p1 p2 = 
       (abs  ((fst p1) - (fst p2))) + (abs  ((snd p1 )- (snd p2)))
-
+;;
 
 let rec choose_coords pos range map=
     Printf.printf "\nline   ->";
@@ -127,7 +127,7 @@ let rec choose map  player =
   Printf.printf "\n Your Choice :: ";
   let ch = read_int () in  
   match ch with
-  | 1 -> let (x,y) = choose_coords (!(fst player.position),!(snd player.position)) 1000  map in
+  | 1 -> let (x,y) = choose_coords (!(fst player.position),!(snd player.position))   1000  map in
           Move(x,y);
   | 2 -> begin
           let (x,y) = choose_coords (!(fst player.position),!(snd player.position))  4  map in
@@ -194,15 +194,24 @@ let pcc  x0 y0 x1 y1 map=
                                         ) [] [(1,0);(0,1);(-1,0);(0,-1)]
           end
     in 
-    get_way x0 y0 x1 y1 cpy
+    let lresult = (get_way x0 y0 x1 y1 cpy) in 
+    match lresult with 
+      []-> lresult
+    |e::llres->(x1,y1)::lresult
   ;;
 
 let position_change x0 y0 x1 y1 map player id = 
+  print_map map;
   map.grid.(x0).(y0)<- Empty;
   map.grid.(x1).(y1)<- Player(id);
   (fst (player.position )):= x1;
   (snd (player.position )):= y1;
+  Unix.sleepf 0.1;
+  clear 0;
+  ()
 ;;
+  
+
 
 
 
@@ -212,19 +221,25 @@ let move id player map x y =
   match map.grid.(x).(y) with
      Empty->begin
               let way_list= (pcc (!(fst (player.position))) (!(snd (player.position))) x y map)  in
-              List.iter(fun e -> position_change (!(fst (player.position))) (!(snd (player.position))) (fst e) (snd e) map player id) (List.rev way_list);
-              if x>(!(fst (player.position))) && way_list!=[] then 
-                    position_change (!(fst (player.position))) (!(snd (player.position))) ((!(fst (player.position)))+1) (!(snd (player.position))) map player id
-              else if x<(!(fst (player.position))) && way_list!=[] then 
-                    position_change (!(fst (player.position))) (!(snd (player.position))) ((!(fst (player.position)))-1) (!(snd (player.position))) map player id;
-              if y<(!(snd (player.position))) && way_list!=[] then 
-                    position_change (!(fst (player.position))) (!(snd (player.position))) (!(fst (player.position))) ((!(snd (player.position)))-1) map player id;
-              player.pm:= !(player.pm) - 1 
+              List.iter(fun e -> position_change (!(fst (player.position))) (!(snd (player.position))) (fst e) (snd e) map player id ;) (List.rev way_list);
+              player.pm:= !(player.pm) - 1
             end   
     |Wall | Player(_)-> Printf.printf"Vous ne pouvez vous déplacer dans une case occupée !!!\n"
     ;;
 
 
+let died players_list id : bool =
+  try 
+    let x =List.assoc id !players_list in 
+    false
+  with _ -> true
+;;
+let win team players_list : bool =
+  if  team = 0 then 
+    died players_list 1 && died players_list 3 && died players_list 5
+  else
+    died players_list 0 && died players_list 2 && died players_list 4
+  ;;
 
   
 let rec game_loop map players_list id =
@@ -245,8 +260,12 @@ let rec game_loop map players_list id =
                       print_map map;
                       game_loop map players_list ((id+1) mod 6)
                      end
-      | DoNothing -> Printf.printf "SKIP";
-      
+      | DoNothing -> begin
+                          clear 0;
+                          print_map map;
+                          game_loop map players_list ((id+1) mod 6)
+                          
+                     end
     
   with _ -> game_loop map players_list ((id+1) mod 6)
   
