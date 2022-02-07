@@ -35,6 +35,26 @@ let init_map h w =
     {height = h ; width = w ; grid = gr}
 ;;
 
+
+
+
+let place_obstacle m = 
+  let y =  (Random.int (m.width -2))+1 in 
+  let x =  (Random.int (m.height -2))+1 in 
+   m.grid.(x).(y)<- Wall
+ ;;  
+
+ let init_obstacle m = 
+  for i=0 to ((m.height*m.width)/10)
+   do
+    place_obstacle m
+   done
+   ;;
+
+
+
+
+
 let rec place_player m id= 
   let y =  (Random.int (m.width -2))+1 in 
   let x =  (Random.int (m.height -2))+1 in 
