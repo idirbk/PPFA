@@ -85,8 +85,8 @@ let m = init_map 20 30;;
 init_players m players_list;;
 init_obstacle m;;
 print_map m;;
-game_loop m players_list 0;;
-(*
+(*game_loop m players_list 0;;
+
 let s = map_translation_send m;;
 Printf.printf "\n map -> CC  : \n %s  \n" s;;
 let pls = player_translation_send invincible;;
@@ -94,5 +94,11 @@ Printf.printf"\n the invincible translation -> :%s \n" pls;;
 Printf.printf"\n La liste des actions traduites est ->: %s \n" (String.sub !action_trans_netk_send 0 ((String.length !action_trans_netk_send)-1));;
 
 *)
+
+let pls = player_translation_send invincible;;
+Printf.printf"\n the invincible translation -> :%s \n" pls;;
+let bb = player_translation_receive pls;;
+let bbs = player_translation_send bb;;
+Printf.printf"\n the invincible translation2 -> :%s \n" bbs;;
 
 
