@@ -20,7 +20,7 @@ let map_translation_send map =
 ;;
 
 let player_translation_send player =
-  string_of_int player.strength ^"|"^ string_of_int !(player.life) ^ "|"^ string_of_int !(player.pa) ^ "|"^ string_of_int !(player.pm) 
+  string_of_int player.strength ^"|"^ string_of_int !(player.life) ^ "|"^ string_of_int !(player.pa) ^ "|"^ string_of_int !(player.pm) ^ "|"^string_of_int(!(fst player.position))^"*"^string_of_int(!(snd player.position)) 
                             ^ "|"^ string_of_int player.attack.dmg ^ "|" ^ string_of_int player.attack.range ^ "|"^ string_of_int player.attack.pa 
 ;;
 
@@ -35,7 +35,7 @@ let player_translation_receive player_string =
   let nb=ref "" in 
   while !i <((String.length player_string)) do
     begin
-      while ((!i <(String.length player_string)) && (String.get (!player_string_ref) !i) != '|')  do
+      while ((!i <(String.length player_string)) && (String.get (!player_string_ref) !i) != '|'&& (String.get (!player_string_ref) !i) != '*')  do
       
         begin
           nb := !nb ^ (String.sub !player_string_ref !i 1);
@@ -49,7 +49,7 @@ let player_translation_receive player_string =
     end
   done;
   
-  {position=(ref 0,ref 0);strength=List.nth !val_list 0 ;life=ref (List.nth !val_list 1);pa=ref (List.nth !val_list 2) ;pm=ref(List.nth !val_list 3);attack={dmg=List.nth !val_list 4;range=List.nth !val_list 5;pa=List.nth !val_list 6}}
+  {position=(ref (List.nth !val_list 4),ref (List.nth !val_list 5));strength=List.nth !val_list 0 ;life=ref (List.nth !val_list 1);pa=ref (List.nth !val_list 2) ;pm=ref(List.nth !val_list 3);attack={dmg=List.nth !val_list 6;range=List.nth !val_list 7;pa=List.nth !val_list 8}}
 ;;
 
 
@@ -119,8 +119,8 @@ let send_map oc map =
   let str= map_translation_send map in
   output_string oc (str^"n");;
 
-let send_action action =
-  output_string (!action)^"\n";;
+let send_action oc action =
+  output_string oc ((!action)^"\n");;
 
 let read_num ic=
   int_of_string (input_line ic);;
