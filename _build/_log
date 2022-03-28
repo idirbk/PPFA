@@ -1,0 +1,28 @@
+### Starting build.
+# Target: src/Main.ml.depends, tags: { extension:ml, file:src/Main.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules src/Main.ml > src/Main.ml.depends
+# Target: src/Game.ml.depends, tags: { extension:ml, file:src/Game.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules src/Game.ml > src/Game.ml.depends # cached
+# Target: src/Tools.ml.depends, tags: { extension:ml, file:src/Tools.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules src/Tools.ml > src/Tools.ml.depends # cached
+# Target: src/Tools.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:src/Tools.cmo, file:src/Tools.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -I src -o src/Tools.cmo src/Tools.ml # cached
+# Target: src/Game.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:src/Game.cmo, file:src/Game.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -I src -o src/Game.cmo src/Game.ml # cached
+# Target: src/Network.ml.depends, tags: { extension:ml, file:src/Network.ml, ocaml, ocamldep, quiet }
+ocamlfind ocamldep -modules src/Network.ml > src/Network.ml.depends # cached
+# Target: src/Network.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:src/Network.cmo, file:src/Network.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -I src -o src/Network.cmo src/Network.ml # cached
+# Target: src/Main.cmo, tags: { byte, compile, extension:cmo, extension:ml, file:src/Main.cmo, file:src/Main.ml, implem, ocaml, quiet }
+ocamlfind ocamlc -c -I src -o src/Main.cmo src/Main.ml
+# Target: src/Tools.cmx, tags: { compile, extension:cmx, extension:ml, file:src/Tools.cmx, file:src/Tools.ml, implem, native, ocaml, quiet }
+ocamlfind ocamlopt -c -I src -o src/Tools.cmx src/Tools.ml # cached
+# Target: src/Game.cmx, tags: { compile, extension:cmx, extension:ml, file:src/Game.cmx, file:src/Game.ml, implem, native, ocaml, quiet }
+ocamlfind ocamlopt -c -I src -o src/Game.cmx src/Game.ml # cached
+# Target: src/Network.cmx, tags: { compile, extension:cmx, extension:ml, file:src/Network.cmx, file:src/Network.ml, implem, native, ocaml, quiet }
+ocamlfind ocamlopt -c -I src -o src/Network.cmx src/Network.ml # cached
+# Target: src/Main.cmx, tags: { compile, extension:cmx, extension:ml, file:src/Main.cmx, file:src/Main.ml, implem, native, ocaml, quiet }
+ocamlfind ocamlopt -c -I src -o src/Main.cmx src/Main.ml
+# Target: src/Main.native, tags: { dont_link_with, extension:native, file:src/Main.native, link, native, ocaml, program, quiet }
+ocamlfind ocamlopt unix.cmxa -linkpkg -I src src/Tools.cmx src/Game.cmx src/Network.cmx src/Main.cmx -o src/Main.native
+# Compilation successful.
