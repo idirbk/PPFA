@@ -8,18 +8,14 @@
 open Tools
 open Game
 open Network
+  
+let action_trans_netk_send=ref ""
 
-
-
-
-
-let action_trans_netk_send=ref "";;
-    
 let rec choose map player = 
   Printf.printf "\nmake a choice  :         \n";
   Printf.printf "\n|1| ===> Atack             ";
   Printf.printf "\n|2| ===> Move              ";
-  Printf.printf "\n|3| ===> pass your turn  \n";
+  Printf.printf "\n|3| ===> Send Action  \n";
   Printf.printf "\n Your Choice :: ";
   let ch = read_int () in  
   match ch with 
@@ -38,73 +34,50 @@ let rec choose map player =
          DoNothing;
         end 
   | _ -> begin
-          clear 0;
+          clear;
           print_map map;
           choose map player
         end
-;;
-  
-
-
-
 
   
-let rec game_loop map players_list id =
+  
+let rec game_loop ic oc =
+  let id = read_num ic in
+  let map = read_map ic in
+  let players_list = ref (read_perso ic) in
   Printf.printf "player N° %d\n" id;
-  try 
-      let player =  List.assoc id !players_list in
-      let choice = choose map player in
-      match choice with
-      | Atack(x,y) ->begin
-                      attack player map players_list x y; 
-                      clear 0; 
+  print_player !players_list;
+  print_map map;
+
+  let player =  List.nth !players_list id in
+
+  let choice = choose map player in
+  match choice with
+  | Atack(x,y) ->begin
+                  attack player map players_list x y; 
+                  clear; 
+                  print_map map;
+                  end
+  | Move(x,y) -> begin
+                  move id player map  x y;  
+                  clear;
+                  print_map map;
+                  end
+  | DoNothing -> begin
+                      clear;
                       print_map map;
-                      game_loop map players_list ((id+1) mod 6)
-                     end
-      | Move(x,y) -> begin
-                      move id player map  x y;  
-                      clear 0;
-                      print_map map;
-                      game_loop map players_list ((id+1) mod 6)
-                     end
-      | DoNothing -> begin
-                          clear 0;
-                          print_map map;
-                          game_loop map players_list ((id+1) mod 6)
-                          
-                     end
+                      send_action oc action_trans_netk_send;
+                      action_trans_netk_send := ""
+
+                  end
     
-  with _ -> game_loop map players_list ((id+1) mod 6)
-  
-  
-;;
 
   
-let players_list = ref [];;
-let m = init_map 20 30;;
-init_players m players_list;;
-init_obstacle m;;
-print_map m;;
-(*game_loop m players_list 0;;
+  
+let perso_list = [invincible;invincible;invincible];;
+let ic,oc = install_client "92.89.116.186";;
+send_pseudo oc "idir";;
+send_perso oc perso_list;;
+game_loop ic oc;;
 
-let s = map_translation_send m;;
-Printf.printf "\n map -> CC  : \n %s  \n" s;;
-let pls = player_translation_send invincible;;
-Printf.printf"\n the invincible translation -> :%s \n" pls;;
-Printf.printf"\n La liste des actions traduites est ->: %s \n" (String.sub !action_trans_netk_send 0 ((String.length !action_trans_netk_send)-1));;
-
-*)
-
-(*let pls = player_translation_send invincible;;
-Printf.printf"\n the invincible translation -> :%s \n" pls;;
-let bb = player_translation_receive pls;;
-let bbs = player_translation_send bb;;
-Printf.printf"\n the invincible translation2 -> :%s \n" bbs;;*)
-let s = map_translation_send m;;
-Printf.printf "\n map en chaine==== : \n %s  \n" s;;
-
-let m_convert = map_translation_receive s;;
-Printf.printf"chaine de car -> map === \n";;
-print_map m_convert;;
-
-
+  

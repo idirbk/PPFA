@@ -17,12 +17,11 @@ let map_translation_send map =
     done;
     String.sub !s_res 0 ((String.length !s_res)-1) 
   
-;;
 
 let player_translation_send player =
   string_of_int player.strength ^"|"^ string_of_int !(player.life) ^ "|"^ string_of_int !(player.pa) ^ "|"^ string_of_int !(player.pm) ^ "|"^string_of_int(!(fst player.position))^"*"^string_of_int(!(snd player.position)) 
                             ^ "|"^ string_of_int player.attack.dmg ^ "|" ^ string_of_int player.attack.range ^ "|"^ string_of_int player.attack.pa 
-;;
+
 
 
 (* second sense network translation *)
@@ -50,7 +49,7 @@ let player_translation_receive player_string =
   done;
   
   {position=(ref (List.nth !val_list 4),ref (List.nth !val_list 5));strength=List.nth !val_list 0 ;life=ref (List.nth !val_list 1);pa=ref (List.nth !val_list 2) ;pm=ref(List.nth !val_list 3);attack={dmg=List.nth !val_list 6;range=List.nth !val_list 7;pa=List.nth !val_list 8}}
-;;
+
 
 
 let height_count map_string  = 
@@ -60,7 +59,7 @@ let height_count map_string  =
       cpt:=!cpt+1;
   done;
   !cpt
-;;
+
 
 
 let width_count map_string = 
@@ -71,7 +70,7 @@ let width_count map_string =
     i := !i +1;
   done;
   !cpt
-;;
+
 
 
 
@@ -98,7 +97,7 @@ let map_translation_receive map_string  =
       end
   done; 
   {height = h+1 ; width = w ; grid = gr}
-;;
+
     
 
 let install_client ip  =
@@ -106,35 +105,30 @@ let install_client ip  =
      let domain = Unix.domain_of_sockaddr sockaddr in
      let sock = Unix.socket domain Unix.SOCK_STREAM 0 in 
      Unix.connect sock sockaddr;
-     (Unix.in_channel_of_descr sock,Unix.out_channel_of_descr sock);;
+     (Unix.in_channel_of_descr sock,Unix.out_channel_of_descr sock)
      
 let send_pseudo oc pseudo = 
-  output_string oc (pseudo ^"\n");;
+  output_string oc (pseudo ^"\n")
 
 let send_perso oc liste_perso =
   List.iter (fun e -> let str = player_translation_send e in  
-                      output_string oc (str^"\n") ;flush oc) liste_perso;;
+                      output_string oc (str^"\n") ;flush oc) liste_perso
 
 let send_map oc map =
   let str= map_translation_send map in
-  output_string oc (str^"n");;
+  output_string oc (str^"n")
 
 let send_action oc action =
-  output_string oc ((!action)^"\n");;
+  output_string oc ((!action)^"\n")
 
 let read_num ic=
-  int_of_string (input_line ic);;
+  int_of_string (input_line ic)
 
 let read_perso ic =
-  let res = ref [] in
-  for i = 0 to 5
-  do
-    res := (player_translation_receive (input_line ic))::(!res)
-  done;
-  List.rev (!res);;
+    List.map (fun e ->player_translation_receive e) (String.split_on_char ';' (input_line ic))  
 
 let read_map ic = 
-  (map_translation_receive (input_line ic));;
+  (map_translation_receive (input_line ic))
 
 
   
