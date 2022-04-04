@@ -125,7 +125,7 @@ let rec choose_coords pos range map=
     let l = read_int () in 
     Printf.printf "\ncolomn ->";
     let c = read_int () in 
-    if (l > 0) && (c > 0) && (l < map.height -1) && (c < map.width -1) && distance pos (l,c) <= range
+    if (l > 0) && (c > 0) && (l < map.height -1) && (c < map.width -1) && distance pos (l,c) < range 
       then (l,c)
     else
       (choose_coords pos range map)
@@ -202,8 +202,8 @@ let move id player map x y =
   match map.grid.(x).(y) with
      Empty->begin
               let way_list= (pcc (!(fst (player.position))) (!(snd (player.position))) x y map)  in
-              List.iter(fun e -> position_change (!(fst (player.position))) (!(snd (player.position))) (fst e) (snd e) map player id ;) (List.rev way_list);
-              player.pm:= !(player.pm) - 1
+              List.iter(fun e -> position_change (!(fst (player.position))) (!(snd (player.position))) (fst e) (snd e) map player id ; player.pm:= !(player.pm) - 1) (List.rev way_list);
+              
             end   
     |Wall | Player(_)-> Printf.printf"Vous ne pouvez vous déplacer dans une case occupée !!!\n"
     

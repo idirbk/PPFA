@@ -12,6 +12,7 @@ open Network
 let action_trans_netk_send=ref ""
 
 let rec choose map player = 
+  Printf.printf "\nPlayer pm == %d \n" !(player.pm);
   Printf.printf "\nmake a choice  :         \n";
   Printf.printf "\n|1| ===> Atack             ";
   Printf.printf "\n|2| ===> Move              ";
@@ -24,8 +25,8 @@ let rec choose map player =
           action_trans_netk_send:= !action_trans_netk_send^string_of_int 1 ^ "|"^ string_of_int x ^"|"^string_of_int y^";"; 
           Atack(x,y)
           end
-  | 2 -> begin
-          let (x,y) = choose_coords (!(fst player.position),!(snd player.position)) 1000  map in
+  | 2 when !(player.pm) > 0 -> begin
+          let (x,y) = choose_coords (!(fst player.position),!(snd player.position)) !(player.pm)  map in
           action_trans_netk_send:= !action_trans_netk_send^string_of_int 2 ^ "|"^ string_of_int x ^"|"^ string_of_int y^";";
           Move(x,y);
         end   
