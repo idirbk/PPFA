@@ -62,10 +62,12 @@ let rec choice map players_list player id  =
                       print_map map;
 
                   end
+
+                  
 let rec game_loop ic oc =
   let id = read_num ic in
   let map = read_map ic in
-  let players_list = ref (read_perso ic) in
+  let players_list = ref (read_perso ic ) in 
   Printf.printf "player N° %d\n" id;
   print_player !players_list;
   print_map map;
@@ -85,4 +87,4 @@ send_pseudo oc "idir";;
 send_perso oc perso_list;;
 game_loop ic oc;;
 
-  
+

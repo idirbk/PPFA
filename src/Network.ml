@@ -116,10 +116,12 @@ let send_perso oc liste_perso =
 
 let send_map oc map =
   let str= map_translation_send map in
-  output_string oc (str^"n")
+  output_string oc (str^"n"); flush oc
 
 let send_action oc action =
-  output_string oc ((!action)^"\n")
+  
+  output_string oc ((!action)^"\n");
+  flush oc
 
 let read_num ic=
   int_of_string (input_line ic)
