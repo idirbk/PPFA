@@ -222,6 +222,16 @@ let win team players_list : bool =
     died players_list 0 && died players_list 2 && died players_list 4
 
 
+let f strength dmg : int = 
+  dmg+(strength/10)
+
+let g dmg pa range : bool = 
+  pa-(range+dmg) == 0
+
+
+
+
+
 
 let print_player player_list =
   List.iter (fun e -> Printf.printf "{position=(ref %d,ref %d);strength=%d;life= ref %d;pa=ref %d;pm=ref %d;attack={dmg=%d;range=%d;pa=%d}}\n"
