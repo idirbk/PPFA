@@ -133,7 +133,11 @@ let read_map ic =
   (map_translation_receive (input_line ic))
 
 
-  
+let add_shot actions shot =
+  match shot with 
+  |Move(x,y) -> actions := (!actions)^"2|"^(string_of_int x)^"|"^(string_of_int y)^";";()
+  |Atack(x,y) -> actions := (!actions)^"1|"^(string_of_int x)^"|"^(string_of_int y)^";";()
+  |DoNothing -> ()
 
 
 

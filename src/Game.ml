@@ -229,10 +229,42 @@ let g dmg pa range : bool =
   pa-(range+dmg) == 0
 
 
-
-
-
-
 let print_player player_list =
   List.iter (fun e -> Printf.printf "{position=(ref %d,ref %d);strength=%d;life= ref %d;pa=ref %d;pm=ref %d;attack={dmg=%d;range=%d;pa=%d}}\n"
                                     !(fst e.position) !(snd e.position) e.strength !(e.life) !(e.pa) !(e.pm) (e.attack.dmg) (e.attack.range) (e.attack.pa) ) player_list
+
+let possible_attack players num =
+  let player = List.nth players num in
+  let dmax = player.attack.range in
+  let enemies = match (num mod 2) with
+            |0 ->[(List.nth players 1); (List.nth players 3); (List.nth players 5)]
+            |_ ->[(List.nth players 0); (List.nth players 2); (List.nth players 4)]
+        in
+  let x = !(fst (player.position)) in
+  let y = !(snd (player.position)) in
+  List.fold_left (fun acc e -> if (distance (x,y) ((!(fst (e.position))),(!(snd (e.position))))) <= dmax 
+                            then e::acc else acc) [] enemies
+
+
+
+let rec process map x y w h v range =
+  if(v > range) || x*y <= 0 || x >= w || y >= h || (map.(y).(x) != 0 && map.(y).(x) != -2)then
+    []
+  else
+    let var = if(map.(y).(x) == -2) then [] else  [(y,x)] in
+    if (map.(y).(x) != -2) then (if(map.(y).(x) > v) then map.(y).(x) <- v) else  map.(y).(x) <- -3;
+    let res = var@(List.fold_left (fun acc e -> 
+                                    let nx = x + (fst e)in
+                                    let ny = y + (snd e)in
+                                    acc@process map nx ny w h (v+1) range
+                          ) [] [(1,0);(0,1);(-1,0);(0,-1)]) in
+    res
+
+
+let get_possible_moves map player range =
+  let m = copie_map map in 
+  let l = !(fst (player.position)) in
+  let c = !(snd (player.position)) in
+  m.(l).(c) <- -2;
+  (process m c l (map.width) (map.height) 0 range)
+

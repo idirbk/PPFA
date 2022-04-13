@@ -9,66 +9,34 @@ open Tools
 open Game
 open Network
 open Graphics
+open Draw
 
+let actions = ref "";;
 
-let rec draw_walls h w hi wi = 
-    if hi != h && wi!=w then 
-        begin
-            if (hi+1)=h || hi=0 then 
-                begin
-                    set_color black;
+let init () =
+  init_window ();
+  let perso_list = [invincible;invincible;invincible] in
+  let ic,oc = install_client "92.89.116.186" in
+  send_pseudo oc "idir";
+  send_perso oc perso_list;
+  ic,oc
 
-                    fill_rect ((wi)*20) ((hi)*20) 20 20;
-                    set_color white;
-                    draw_rect ((wi)*20) ((hi)*20) 20 20;
-                    draw_walls h w hi (wi+1);
-                    draw_walls h w (hi+1) wi
-                end
-
-            else 
-                begin
-                    set_color black;
-                    fill_rect wi ((hi)*20) 20 20;
-                    set_color white;
-                    draw_rect wi ((hi)*20) 20 20;
-
-                    set_color black;
-                    fill_rect ((w-1)*20) ((hi)*20) 20 20;
-                    set_color white;
-                    draw_rect ((w-1)*20) ((hi)*20) 20 20;
-
-                    
-                    draw_walls h w (hi+1) wi
-                end       
-        end
-
-;;
-
-let rec draw_players players team =
-if team = 0 then
-  set_color red;
-  draw_rect ((w-1)*20) ((hi)*20) 20 20;
-
-;;
-
-
-let dessine_map map players= 
-
-    open_graph " 400x400" ;
-    
-    set_window_title " map " ;
-    
-    draw_walls map.height map.width 0 0;
-    draw_players players;
-    
+let rec main_loop ic oc= 
+    let id = read_num ic in
+    let map = read_map ic in
+    let players_list = ref (read_perso ic ) in 
+    draw_map map;
+    play_moves map !(players_list) id actions;
+    main_loop ic oc;
     read_key(); 
-    close_graph(); 
-;;
+    close_graph();
+    ()
 
-dessine_map 0;;
+let ic,oc = init ();;
+main_loop ic oc;;
 
 (*
-let action_trans_netk_send=ref "";
+
 
 let rec choose map player = 
   Printf.printf "\nPlayer pm == %d \n" !(player.pm);
