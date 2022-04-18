@@ -108,7 +108,8 @@ let install_client ip  =
      (Unix.in_channel_of_descr sock,Unix.out_channel_of_descr sock)
      
 let send_pseudo oc pseudo = 
-  output_string oc (pseudo ^"\n")
+  output_string oc (pseudo ^"\n");
+  flush oc
 
 let send_perso oc liste_perso =
   List.iter (fun e -> let str = player_translation_send e in  
@@ -119,7 +120,7 @@ let send_map oc map =
   output_string oc (str^"n"); flush oc
 
 let send_action oc action =
-  
+  Printf.printf "acion == %s  \n%!" !action;
   output_string oc ((!action)^"\n");
   flush oc
 

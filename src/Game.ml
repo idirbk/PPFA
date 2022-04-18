@@ -145,7 +145,21 @@ let copie_map map =
         done;
     done;
   cp
-  
+  let copie_map2 map =
+    let cp = Array.make_matrix map.height map.width 0 in
+    for i = 0 to map.height-1
+      do 
+        for j = 0 to map.width-1
+          do
+            cp.(i).(j) <-
+                        match map.grid.(i).(j) with
+                        | Empty -> 0
+                        | Wall -> -1
+                        | Player(_) -> -2
+          done;
+      done;
+    cp
+
   
 let rec pcc_aux cmap v x0 y0 x1 y1 =
 cmap.(x0).(y0) <- (v+1);
@@ -268,3 +282,30 @@ let get_possible_moves map player range =
   m.(l).(c) <- -2;
   (process m c l (map.width) (map.height) 0 range)
 
+let rec get_att m l c il ic range = 
+  if range <= 0 then [] 
+  else
+    match m.(l+il).(c+ic) with
+    |  0-> ((l+il),(c+ic))::(match il,ic with 
+                            |0,(-1)|0,1|1,0|(-1),0 -> (get_att m (l+il) (c+ic) il ic (range -1))
+                            |_ -> (get_att m (l+il) (c) 0 ic (range -1))@(get_att m (l) (c+ic) il 0 (range -1))@(get_att m (l+il) (c+ic) il ic (range -2))
+                            )
+    
+    | -2-> [((l+il),(c+ic))]
+    | -1-> []
+let get_possible_attacks map player range =
+  let m = copie_map2 map in
+  let l = !(fst (player.position)) in
+  let c = !(snd (player.position)) in
+  let var = [(0,1);(1,0);((-1),0);(0,(-1));(1,1);((-1),(-1));((-1),1);(1,(-1))] in
+  List.fold_left (fun acc x -> acc@(get_att m l c (fst x) (snd x) range)) [] var
+  
+
+let attack2 map player_list id l c =
+  let player = List.nth player_list id in
+  (player.pa) := !(player.pa) - player.attack.pa ;
+  match map.grid.(l).(c) with
+  |Empty|Wall -> ()
+  |Player(x) -> let target = List.nth player_list x in
+                target.life := !(target.life) - player.attack.dmg;
+                ()

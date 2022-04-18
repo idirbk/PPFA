@@ -16,7 +16,7 @@ let actions = ref "";;
 let init () =
   init_window ();
   let perso_list = [invincible;invincible;invincible] in
-  let ic,oc = install_client "92.89.116.186" in
+  let ic,oc = install_client "127.0.0.1" in
   send_pseudo oc "idir";
   send_perso oc perso_list;
   ic,oc
@@ -25,10 +25,11 @@ let rec main_loop ic oc=
     let id = read_num ic in
     let map = read_map ic in
     let players_list = ref (read_perso ic ) in 
-    draw_map map;
+    draw_map map !players_list id;
     play_moves map !(players_list) id actions;
+    send_action oc actions;
+    actions := "";
     main_loop ic oc;
-    read_key(); 
     close_graph();
     ()
 
