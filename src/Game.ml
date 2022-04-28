@@ -37,7 +37,7 @@ let init_map h w =
 
 
 
-
+(* place obstacle in random places  *)
 let place_obstacle m = 
   let y =  (Random.int (m.width -2))+1 in 
   let x =  (Random.int (m.height -2))+1 in 
@@ -50,11 +50,7 @@ let place_obstacle m =
     place_obstacle m
    done
    
-
-
-
-
-
+(* Place the player in the game board *)
 let rec place_player m id= 
   let y =  (Random.int (m.width -2))+1 in 
   let x =  (Random.int (m.height -2))+1 in 
@@ -76,7 +72,7 @@ let init_players m  players_list=
 
 
 
-  (* Printing the Board game in Console*)
+  (* Printing the game Board in Console*)
 let print_cell c =
   match c with
   | Empty -> Printf.printf " "
@@ -94,31 +90,16 @@ let print_map map =
       Printf.printf "\n%!";
     done
 
-
-(* Delete player from Players list *)
-let rec rm_id l id = 
-  match l with
-  | [] -> []
-  | e::ll -> if id = 0 then ll else e::(rm_id ll (id-1))
+(* Print a list of players in console *)
+let print_player player_list =
+  List.iter (fun e -> Printf.printf "{position=(ref %d,ref %d);strength=%d;life= ref %d;pa=ref %d;pm=ref %d;attack={dmg=%d;range=%d;pa=%d}}\n"
+                                    !(fst e.position) !(snd e.position) e.strength !(e.life) !(e.pa) !(e.pm) (e.attack.dmg) (e.attack.range) (e.attack.pa) ) player_list
 
 
 
 
-let attack player map players_list x y =
-  player.pa := !(player.pa) -1;
-  match map.grid.(x).(y) with
-  | Empty | Wall-> Printf.printf("BAD SHOT !!! :( ")
-  | Player(id)  ->(  
-                      
-                        let target =  List.nth !players_list id in
-                        target.life :=  !(target.life) - player.attack.dmg;
-                        
-                        if !(target.life) <= 0 then 
-                            (players_list := (rm_id !players_list id);
-                            map.grid.(x).(y) <- Empty)   
-                  ) 
 
-
+(* choose the coords from terminal *)
 
 let rec choose_coords pos range map=
     Printf.printf "\nline   ->";
@@ -130,6 +111,7 @@ let rec choose_coords pos range map=
     else
       (choose_coords pos range map)
   
+
 
 
 let copie_map map =
@@ -160,6 +142,8 @@ let copie_map map =
       done;
     cp
 
+
+(* A* algorithme *)
   
 let rec pcc_aux cmap v x0 y0 x1 y1 =
 cmap.(x0).(y0) <- (v+1);
@@ -201,7 +185,7 @@ let pcc  x0 y0 x1 y1 map=
     []-> lresult
   |e::llres->(x1,y1)::lresult
 
-
+(* change player's position from x0 y0 to x1 y1 *)
 let position_change x0 y0 x1 y1 map player id = 
   print_map map;
   map.grid.(x0).(y0)<- Empty;
@@ -212,6 +196,7 @@ let position_change x0 y0 x1 y1 map player id =
   clear
 
 
+(* player move to the coords x y *)
 let move id player map x y =
   match map.grid.(x).(y) with
      Empty->begin
@@ -221,8 +206,16 @@ let move id player map x y =
             end   
     |Wall | Player(_)-> Printf.printf"Vous ne pouvez vous déplacer dans une case occupée !!!\n"
     
-
-
+(* player attack the coords l c *)
+let attack map player_list id l c =
+  let player = List.nth player_list id in
+  (player.pa) := !(player.pa) - player.attack.pa ;
+  match map.grid.(l).(c) with
+  |Empty|Wall -> ()
+  |Player(x) -> let target = List.nth player_list x in
+                target.life := max (!(target.life) - player.attack.dmg) 0;
+                if!(target.life ) = 0 then map.grid.(l).(c) <- Empty;
+                ()
 
 let f strength dmg : int = 
   dmg+(strength/10)
@@ -230,30 +223,20 @@ let f strength dmg : int =
 let g dmg pa range : bool = 
   pa-(range+dmg) == 0
 
+
+(* returns true if the game is over and false else *)
 let game_over player_list = 
   if List.length player_list != 6 then 
     false
   else
-    let m1,m2 = ( [(List.nth player_list 1); (List.nth player_list 3); (List.nth player_list 5)] ,[(List.nth player_list 0); (List.nth player_list 2); (List.nth player_list 4)]) in
+    let (m1,m2) = ( [(List.nth player_list 1); (List.nth player_list 3); (List.nth player_list 5)] ,[(List.nth player_list 0); (List.nth player_list 2); (List.nth player_list 4)]) in
     match (List.filter (fun e -> (!(e.life) > 0)) m1),(List.filter (fun e -> !(e.life) > 0) m2) with
     |[],_ | _,[] -> true
     |_,_ -> false
 
-let print_player player_list =
-  List.iter (fun e -> Printf.printf "{position=(ref %d,ref %d);strength=%d;life= ref %d;pa=ref %d;pm=ref %d;attack={dmg=%d;range=%d;pa=%d}}\n"
-                                    !(fst e.position) !(snd e.position) e.strength !(e.life) !(e.pa) !(e.pm) (e.attack.dmg) (e.attack.range) (e.attack.pa) ) player_list
 
-let possible_attack players num =
-  let player = List.nth players num in
-  let dmax = player.attack.range in
-  let enemies = match (num mod 2) with
-            |0 ->[(List.nth players 1); (List.nth players 3); (List.nth players 5)]
-            |_ ->[(List.nth players 0); (List.nth players 2); (List.nth players 4)]
-        in
-  let x = !(fst (player.position)) in
-  let y = !(snd (player.position)) in
-  List.fold_left (fun acc e -> if (distance (x,y) ((!(fst (e.position))),(!(snd (e.position))))) <= dmax 
-                            then e::acc else acc) [] enemies
+
+
 
 
 
@@ -271,6 +254,7 @@ let rec process map x y w h v range =
     res
 
 
+(* get the possible moves for a player *)
 let get_possible_moves map player range =
   let m = copie_map map in 
   let l = !(fst (player.position)) in
@@ -278,7 +262,7 @@ let get_possible_moves map player range =
   m.(l).(c) <- -2;
   (process m c l (map.width) (map.height) 0 range)
 
-
+(* get the possible attacks for a player *)
 let get_possible_attacks map player range =
   let m = copie_map2 map in 
   let l = !(fst (player.position)) in
@@ -286,12 +270,4 @@ let get_possible_attacks map player range =
   m.(l).(c) <- -2;
   (process m c l (map.width) (map.height) 0 range)
 
-let attack2 map player_list id l c =
-  let player = List.nth player_list id in
-  (player.pa) := !(player.pa) - player.attack.pa ;
-  match map.grid.(l).(c) with
-  |Empty|Wall -> ()
-  |Player(x) -> let target = List.nth player_list x in
-                target.life := max (!(target.life) - player.attack.dmg) 0;
-                if!(target.life ) = 0 then map.grid.(l).(c) <- Empty;
-                ()
+

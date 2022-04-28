@@ -23,7 +23,7 @@ let init () =
 
   init_window ();
   let perso_list = [invincible;invincible;invincible] in
-  let ic,oc = install_client "127.0.0.1" in
+  let ic,oc = install_client "127.0.2.1" in
   send_pseudo oc "idir";
   send_perso oc perso_list;
   ic,oc
@@ -43,7 +43,7 @@ let rec main_loop ic oc=
         main_loop ic oc;
       end
     else
-        if id = 6 && not(game_over !players) then draw_Loose !color else draw_Win !color;
+        if not(game_over !players) then draw_Loose !color else draw_Win !color;
     let _ = wait_next_event [Key_pressed] in
     close_graph();
     ()

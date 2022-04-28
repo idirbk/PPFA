@@ -100,6 +100,8 @@ let map_translation_receive map_string  =
 
     
 
+
+(* connect socket to the ip and return the input/output channel *)
 let install_client ip  =
      let sockaddr = Unix.ADDR_INET(Unix.inet_addr_of_string ip,6566) in 
      let domain = Unix.domain_of_sockaddr sockaddr in
@@ -107,10 +109,12 @@ let install_client ip  =
      Unix.connect sock sockaddr;
      (Unix.in_channel_of_descr sock,Unix.out_channel_of_descr sock)
      
+
 let send_pseudo oc pseudo = 
   output_string oc (pseudo ^"\n");
   flush oc
 
+(* send a list of players *)
 let send_perso oc liste_perso =
   List.iter (fun e -> let str = player_translation_send e in  
                       output_string oc (str^"\n") ;flush oc) liste_perso
