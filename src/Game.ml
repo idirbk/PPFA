@@ -99,8 +99,8 @@ let print_map map =
 let rec rm_id l id = 
   match l with
   | [] -> []
-  | e::ll when id == 0-> ll
-  | e::ll when id != 0-> e::(rm_id ll (id-1))
+  | e::ll -> if id = 0 then ll else e::(rm_id ll (id-1))
+
 
 
 
@@ -145,6 +145,7 @@ let copie_map map =
         done;
     done;
   cp
+  
   let copie_map2 map =
     let cp = Array.make_matrix map.height map.width 0 in
     for i = 0 to map.height-1
@@ -153,9 +154,8 @@ let copie_map map =
           do
             cp.(i).(j) <-
                         match map.grid.(i).(j) with
-                        | Empty -> 0
+                        | Empty | Player(_) -> 0
                         | Wall -> -1
-                        | Player(_) -> -2
           done;
       done;
     cp
@@ -223,18 +223,6 @@ let move id player map x y =
     
 
 
-let died players_list id : bool =
-  try 
-    List.assoc id !players_list; 
-    false
-  with _ -> true
-
-let win team players_list : bool =
-  if  team = 0 then 
-    died players_list 1 && died players_list 3 && died players_list 5
-  else
-    died players_list 0 && died players_list 2 && died players_list 4
-
 
 let f strength dmg : int = 
   dmg+(strength/10)
@@ -242,6 +230,14 @@ let f strength dmg : int =
 let g dmg pa range : bool = 
   pa-(range+dmg) == 0
 
+let game_over player_list = 
+  if List.length player_list != 6 then 
+    false
+  else
+    let m1,m2 = ( [(List.nth player_list 1); (List.nth player_list 3); (List.nth player_list 5)] ,[(List.nth player_list 0); (List.nth player_list 2); (List.nth player_list 4)]) in
+    match (List.filter (fun e -> (!(e.life) > 0)) m1),(List.filter (fun e -> !(e.life) > 0) m2) with
+    |[],_ | _,[] -> true
+    |_,_ -> false
 
 let print_player player_list =
   List.iter (fun e -> Printf.printf "{position=(ref %d,ref %d);strength=%d;life= ref %d;pa=ref %d;pm=ref %d;attack={dmg=%d;range=%d;pa=%d}}\n"
@@ -282,24 +278,13 @@ let get_possible_moves map player range =
   m.(l).(c) <- -2;
   (process m c l (map.width) (map.height) 0 range)
 
-let rec get_att m l c il ic range = 
-  if range <= 0 then [] 
-  else
-    match m.(l+il).(c+ic) with
-    |  0-> ((l+il),(c+ic))::(match il,ic with 
-                            |0,(-1)|0,1|1,0|(-1),0 -> (get_att m (l+il) (c+ic) il ic (range -1))
-                            |_ -> (get_att m (l+il) (c) 0 ic (range -1))@(get_att m (l) (c+ic) il 0 (range -1))@(get_att m (l+il) (c+ic) il ic (range -2))
-                            )
-    
-    | -2-> [((l+il),(c+ic))]
-    | -1-> []
+
 let get_possible_attacks map player range =
-  let m = copie_map2 map in
+  let m = copie_map2 map in 
   let l = !(fst (player.position)) in
   let c = !(snd (player.position)) in
-  let var = [(0,1);(1,0);((-1),0);(0,(-1));(1,1);((-1),(-1));((-1),1);(1,(-1))] in
-  List.fold_left (fun acc x -> acc@(get_att m l c (fst x) (snd x) range)) [] var
-  
+  m.(l).(c) <- -2;
+  (process m c l (map.width) (map.height) 0 range)
 
 let attack2 map player_list id l c =
   let player = List.nth player_list id in
@@ -307,5 +292,6 @@ let attack2 map player_list id l c =
   match map.grid.(l).(c) with
   |Empty|Wall -> ()
   |Player(x) -> let target = List.nth player_list x in
-                target.life := !(target.life) - player.attack.dmg;
+                target.life := max (!(target.life) - player.attack.dmg) 0;
+                if!(target.life ) = 0 then map.grid.(l).(c) <- Empty;
                 ()

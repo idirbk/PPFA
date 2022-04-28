@@ -120,7 +120,6 @@ let send_map oc map =
   output_string oc (str^"n"); flush oc
 
 let send_action oc action =
-  Printf.printf "acion == %s  \n%!" !action;
   output_string oc ((!action)^"\n");
   flush oc
 

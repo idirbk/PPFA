@@ -2,18 +2,10 @@ open Graphics
 open Game
 open Network
 open Tools
+open Bot
 
-
-let size = 60
+let size = 50
 let gray = (rgb 100 100 100)
-
-
-let get_fun l1 c1 l2 c2 =
-  let x1,y1,x2,y2 = if c1 > c2 then c2,l2,c1,l1 else c1,l1,c2,l2 in
-  let m = if x1 = x2 then 0. else ((Float.of_int (y2-y1) ) /. (Float.of_int (x2-x1))) in
-  let b = ( (Float.of_int  y2) -.  m *. (Float.of_int  x2)) in
-  ((fun x -> m *. x +. b))
-
 
 
 let fill_rects list color h =
@@ -36,6 +28,7 @@ let draw_cadriage i j var=
     lineto (j*(size)+(k*size)/4) ((var-i+1)*size);
   done
   
+
 let draw_map map players_list num=
 set_color (rgb 100 100 100);
 fill_rect 0 0 (size*map.width) (size*map.height);
@@ -67,6 +60,8 @@ let var = map.height-1 in
     done
   done
 
+
+
 let display_move l c players id map = 
   let player = List.nth players id in
   let way =  List.rev (pcc !(fst (player.position)) !(snd (player.position)) l c map) in
@@ -84,20 +79,11 @@ let display_move l c players id map =
                       (player.pm) := !(player.pm)-1;
       ) way;
       (player.pm) := !(player.pm)+1
-(* 
-let display_attack l1 c1 l2 c2 =
-  let f = get_fun l1 c1 l2 c2 in
-  let inc = if l1 > l2 then (-1) else if l2 > l1 then 1 in
-  for i = 0 to 10
-  do
-    set_color orange;
-    fill_circle ((l1)*size+inc*(10-i) + size/2) (((map.height-1)-nl)*size + size/2) (size/5);
-  done    
-*)
+
 
 
 let init_window ()= 
-  open_graph " 1200x1200" ;
+  open_graph " 1000x1000" ;
   set_window_title "Street Fighter" ;
   set_color (rgb 100 100 100);
   fill_rect 0 0 (size*20) (size*20)
@@ -126,34 +112,73 @@ let rec get_coords h list=
 
   
   
-let rec  play_moves map player_list id actions=
-  let player = (List.nth player_list id) in
-  match choose_move() with
-    |Atack(_,_) -> if !(player.pa) > 0 then
-                    begin
-                      Printf.printf "aqli da \n %!";
-                      let list =get_possible_attacks map player (5) in 
-                      draw_rects list magenta (map.height-1);
-                      let (l,c) = get_coords (map.height-1) list in
-                      attack2 map player_list id l c;
-                      draw_rects list white (map.height-1);
-                      add_shot actions (Atack(l,c));
-                      draw_map map player_list id;
-                    end;
-                    (play_moves map player_list id actions)
-    |Move(_,_)  -> if !(player.pm) > 0 then
-                    begin
-                      let list =get_possible_moves map player (!(player.pm)) in 
-                      fill_rects list blue (map.height-1);
-                      let (l,c) = get_coords (map.height-1) list in
-                      fill_rects list (rgb 100 100 100) (map.height-1);
-                      add_shot actions (Move(l,c));
-                      display_move l c player_list id map;
-                      draw_map map player_list id;
-                    end;
-                    (play_moves map player_list id actions)
-    |DoNothing  -> if (String.length (!actions)) > 0 
-                   then 
+let rec  play_moves map player_list id actions bootMode=
+  if (not bootMode) then
+    let player = (List.nth player_list id) in
+    match choose_move() with
+      |Atack(_,_) -> if !(player.pa) > 0 then
+                      begin
+                        let list =get_possible_attacks map player (5) in 
+                        draw_rects list magenta (map.height-1);
+                        let (l,c) = get_coords (map.height-1) list in
+                        attack2 map player_list id l c;
+                        draw_rects list white (map.height-1);
+                        add_shot actions (Atack(l,c));
+                        draw_map map player_list id;
+                      end;
+                      (play_moves map player_list id actions bootMode)
+      |Move(_,_)  -> if !(player.pm) > 0 then
+                      begin
+                        let list =get_possible_moves map player (!(player.pm)) in 
+                        fill_rects list blue (map.height-1);
+                        let (l,c) = get_coords (map.height-1) list in
+                        fill_rects list (rgb 100 100 100) (map.height-1);
+                        add_shot actions (Move(l,c));
+                        display_move l c player_list id map;
+                        draw_map map player_list id;
+                      end;
+                      (play_moves map player_list id actions bootMode)
+      |DoNothing  -> if (String.length (!actions)) > 0 
+                    then 
+                        actions :=( String.sub !actions 0 ((String.length !actions) -1))
+                    else 
+                        (play_moves map player_list id actions bootMode)
+  else
+    let shot = bestshot map player_list id in
+    match shot with 
+    |Atack(l,c) ->begin
+                    attack2 map player_list id l c;
+                    add_shot actions (Atack(l,c));
+                    draw_map map player_list id;
+                  end;
+                  (play_moves map player_list id actions bootMode)
+    |Move(l,c)  ->begin
+                    add_shot actions (Move(l,c));
+                    display_move l c player_list id map;
+                    draw_map map player_list id;
+                  end;
+                  (play_moves map player_list id actions bootMode)
+    |DoNothing  ->if (String.length (!actions)) > 0 
+                  then 
                       actions :=( String.sub !actions 0 ((String.length !actions) -1))
-                   else 
-                      (play_moves map player_list id actions)
+                  else 
+                      (play_moves map player_list id actions bootMode)
+                
+
+
+
+
+let draw_Loose color = 
+  set_color color;
+  fill_rect 0 0 (size*20) (size*20);
+  set_text_size 300;
+  moveto (size*9) (size*7);
+  set_color black;
+  draw_string ("YOU LOOSE :(")
+
+let draw_Win color = 
+  set_color color;
+  fill_rect 0 0 (size*20) (size*20);
+  set_color black;
+  moveto (size*9) (size*7);
+  draw_string ("YOU WIN :)")

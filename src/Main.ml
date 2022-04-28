@@ -11,9 +11,16 @@ open Network
 open Graphics
 open Draw
 
+let bootMode = ref false;;
 let actions = ref "";;
+let color = ref white;;
+let players = ref [invincible];;
 
 let init () =
+  let argc_length = Array.length Sys.argv in
+  if argc_length != 2 then (exit (-1));
+  if Sys.argv.(1) = "0" then bootMode := false  else bootMode := true;
+
   init_window ();
   let perso_list = [invincible;invincible;invincible] in
   let ic,oc = install_client "127.0.0.1" in
@@ -23,97 +30,24 @@ let init () =
 
 let rec main_loop ic oc= 
     let id = read_num ic in
-    let map = read_map ic in
-    let players_list = ref (read_perso ic ) in 
-    draw_map map !players_list id;
-    play_moves map !(players_list) id actions;
-    send_action oc actions;
-    actions := "";
-    main_loop ic oc;
+    if id < 6   then
+      begin
+        let map = read_map ic in
+        let players_list = ref (read_perso ic ) in 
+        players := !players_list;
+        draw_map map !players_list id;
+        play_moves map !(players_list) id actions !bootMode;
+        send_action oc actions;
+        actions := "";
+        color := if (id mod 2) = 0 then red else blue;
+        main_loop ic oc;
+      end
+    else
+        if id = 6 && not(game_over !players) then draw_Loose !color else draw_Win !color;
+    let _ = wait_next_event [Key_pressed] in
     close_graph();
     ()
 
 let ic,oc = init ();;
 main_loop ic oc;;
 
-(*
-
-
-let rec choose map player = 
-  Printf.printf "\nPlayer pm == %d \n" !(player.pm);
-  Printf.printf "\nmake a choice  :         \n";
-  Printf.printf "\n|1| ===> Atack             ";
-  Printf.printf "\n|2| ===> Move              ";
-  Printf.printf "\n|3| ===> Send Action  \n";
-  Printf.printf "\n Your Choice :: ";
-  let ch = read_int () in  
-  match ch with 
-  | 1 -> begin
-          let (x,y) = choose_coords (!(fst player.position),!(snd player.position))  4  map in
-          action_trans_netk_send:= !action_trans_netk_send^string_of_int 1 ^ "|"^ string_of_int x ^"|"^string_of_int y^";"; 
-          Atack(x,y)
-          end
-  | 2 when !(player.pm) > 0 -> begin
-          let (x,y) = choose_coords (!(fst player.position),!(snd player.position)) !(player.pm)  map in
-          action_trans_netk_send:= !action_trans_netk_send^string_of_int 2 ^ "|"^ string_of_int x ^"|"^ string_of_int y^";";
-          Move(x,y);
-        end   
-  | 3 ->begin 
-         action_trans_netk_send := String.sub !action_trans_netk_send 0 ((String.length !action_trans_netk_send ) -1);
-         DoNothing;
-        end 
-  | _ -> begin
-          clear;
-          print_map map;
-          choose map player
-        end
-
-  
-
-
-let rec choice map players_list player id  = 
-  let  choix = choose map player in
-  match choix with
-  | Atack(x,y) ->begin
-                  attack player map players_list x y; 
-                  clear; 
-                  print_map map;
-                  choice map players_list player id
-                  end
-  | Move(x,y) -> begin
-                  move id player map  x y;  
-                  clear;
-                  print_map map;
-                  choice map players_list player id 
-                  end
-  | DoNothing -> begin
-                      clear;
-                      print_map map;
-
-                  end
-
-
-let rec game_loop ic oc =
-  let id = read_num ic in
-  let map = read_map ic in
-  let players_list = ref (read_perso ic ) in 
-  Printf.printf "player N° %d\n" id;
-  print_player !players_list;
-  print_map map;
-
-  let player =  List.nth !players_list id in
-  choice map players_list player id;
-  send_action oc action_trans_netk_send;
-  Printf.printf "%s\n%!" !action_trans_netk_send;
-  action_trans_netk_send := "";
-  game_loop ic oc
-
-  
-  
-let perso_list = [invincible;invincible;invincible];;
-let ic,oc = install_client "92.89.116.186";;
-send_pseudo oc "idir";;
-send_perso oc perso_list;;
-game_loop ic oc;;
-
-*)
