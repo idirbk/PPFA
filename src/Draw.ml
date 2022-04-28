@@ -140,6 +140,7 @@ let rec  play_moves map player_list id actions bootMode=
                       begin
                         let list =get_possible_moves map player (!(player.pm)) in 
                         fill_rects list magenta (map.height-1);
+                        draw_rects list black (map.height-1);
                         let (l,c) = get_coords (map.height-1) list in
                         fill_rects list (rgb 100 100 100) (map.height-1);
                         add_shot actions (Move(l,c));
